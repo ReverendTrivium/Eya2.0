@@ -86,7 +86,7 @@ To get a local copy of Eyazahrid 2.0 up and running follow these simple steps.
 
 ### Prerequisites
 
-You must have [Java JDK 17](https://www.oracle.com/java/technologies/downloads/) installed on your machine.
+You must have [Java JDK 21](https://www.oracle.com/java/technologies/downloads/) installed on your machine.
 
 ### Installation
 
@@ -173,7 +173,7 @@ Below are some resources that have been instrumental in making this project a re
 [watchers-shield]: https://img.shields.io/github/watchers/ReverendTrivium/Eya2.0?style=for-the-badge
 [watchers-url]: https://github.com/ReverendTrivium/Eya2.0/watchers
 [issues-shield]: https://img.shields.io/github/issues/ReverendTrivium/Eya2.0?style=for-the-badge
-[issues-url]: https://github.com/TechnoVisionDev/TechnoBot/issues
+[issues-url]: https://github.com/ReverendTrivium/Eya2.0/issues
 [license-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg?style=for-the-badge
 [license-url]: https://github.com/ReverendTrivium/Eya2.0/blob/master/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
