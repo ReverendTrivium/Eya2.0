@@ -120,7 +120,12 @@ And don’t forget to star the project! Thank you for your support!
 <!-- LICENSE -->
 ## License
 
-Eyazahrid 2.0 is licensed under the terms of [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) ("CC-BY-NC-SA-4.0"). Commercial use is not allowed under this license. This includes any kind of revenue made with or based upon the software, even donations.
+This work is licensed under a
+[Creative Commons Attribution 4.0 International License][cc-by].
+
+Commercial use is not allowed under this license. This includes any kind of revenue made with or based upon the software, even donations.
+
+[![CC BY 4.0][cc-by-image]][cc-by]
 
 The CC-BY-NC-SA-4.0 allows you to:
 - [x] **Share** -- copy and redistribute the material in any medium or format
@@ -169,8 +174,11 @@ Below are some resources that have been instrumental in making this project a re
 [watchers-url]: https://github.com/ReverendTrivium/Eya2.0/watchers
 [issues-shield]: https://img.shields.io/github/issues/ReverendTrivium/Eya2.0?style=for-the-badge
 [issues-url]: https://github.com/TechnoVisionDev/TechnoBot/issues
-[license-shield]: https://img.shields.io/github/license/ReverendTrivium/Eya2.0?style=for-the-badge
+[license-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg?style=for-the-badge
 [license-url]: https://github.com/ReverendTrivium/Eya2.0/blob/master/LICENSE
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/derrickeberlein/
+[cc-by]: http://creativecommons.org/licenses/by/4.0/
+[cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
+[cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
 
