@@ -68,7 +68,7 @@ Eyazahrid 2.0 is a discord bot that allows the user to run some fun commands and
 
 ### Built With
 
-Below is a comprehensive list of the frameworks and libraries used to build the TechnoBot website.
+Below is a comprehensive list of the frameworks and libraries used to build the Eyazahrid Discord Bot.
 
 * [Java Discord API](https://github.com/DV8FromTheWorld/JDA)
 * [MongoDB Java Driver](https://mongodb.github.io/mongo-java-driver)
