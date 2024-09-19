@@ -1,9 +1,22 @@
 <div id="top"></div>
 
+<!-- PROJECT SHIELDS -->
+<!--
+*** I'm using markdown "reference style" links for readability.
+*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
+*** See the bottom of this document for the declaration of the reference variables
+*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
+[![Forks][forks-shield]][forks-url]
+[![Watchers][watchers-shield]][watchers-url]
+[![Issues][issues-shield]][issues-url]
+[![License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/ReverendTrivium/Eyazahrid-Discord-Bot">
+  <a href="https://github.com/ReverendTrivium/Eya2.0">
     <img src="https://i.imgur.com/VgHXeiE.png" alt="Logo" width="150" height="150">
   </a>
 
@@ -11,13 +24,15 @@
 <p align="center">
     An advanced, multi-purpose bot for Discord
     <br />
-    <a href="https://technobot.app"><strong>Explore this project »</strong></a>
+    <a href="https://github.com/ReverendTrivium/Eya2.0"><strong>Explore this project »</strong></a>
     <br />
     <br />
     ·
-    <a href="https://github.com/ReverendTrivium/Eyazahrid-Discord-Bot/issues">Report Bug</a>
+    <a href="https://github.com/ReverendTrivium/Eya2.0/wiki">Wiki</a>
     ·
-    <a href="https://github.com/ReverendTrivium/Eyazahrid-Discord-Bot/issues">Request Feature</a>
+    <a href="https://github.com/ReverendTrivium/Eya2.0/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/ReverendTrivium/Eya2.0/issues">Request Feature</a>
   </p>
 </div>
 
@@ -47,7 +62,7 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-Eyazahrid is a discord bot that allows the user to run some fun commands and fetch dynamic media from Reddit using Slash Commands.
+Eyazahrid 2.0 is a discord bot that allows the user to run some fun commands and fetch dynamic media from Reddit using Slash Commands.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -79,7 +94,7 @@ _Below are the necessary steps needed to run this project._
 
 1. Clone the repo:
    ```sh
-   git clone https://github.com/ReverendTrivium/Eyazahrid-Discord-Bot.git
+   git clone https://github.com/ReverendTrivium/Eya2.0.git
    ```
 2. Create a `.env` file in the root project folder and populate it with all the variables in `.env.example`.
 3. You can now build and run the application using maven or the provided docker file.
@@ -105,7 +120,7 @@ And don’t forget to star the project! Thank you for your support!
 <!-- LICENSE -->
 ## License
 
-Eyazahrid 2.0 is licensed under the terms of [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International]() ("CC-BY-NC-SA-4.0"). Commercial use is not allowed under this license. This includes any kind of revenue made with or based upon the software, even donations.
+Eyazahrid 2.0 is licensed under the terms of [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://github.com/ReverendTrivium/Eya2.0/blob/master/LICENSE) ("CC-BY-NC-SA-4.0"). Commercial use is not allowed under this license. This includes any kind of revenue made with or based upon the software, even donations.
 
 The CC-BY-NC-SA-4.0 allows you to:
 - [x] **Share** -- copy and redistribute the material in any medium or format
@@ -145,3 +160,17 @@ Below are some resources that have been instrumental in making this project a re
 * [Google Search API](https://developers.google.com/custom-search/v1/overview)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[forks-shield]: https://img.shields.io/github/forks/ReverendTrivium/Eya2.0?style=for-the-badge
+[forks-url]: https://github.com/ReverendTrivium/Eya2.0/forks
+[watchers-shield]: https://img.shields.io/github/watchers/ReverendTrivium/Eya2.0?style=for-the-badge
+[watchers-url]: https://github.com/ReverendTrivium/Eya2.0/watchers
+[issues-shield]: https://img.shields.io/github/issues/ReverendTrivium/Eya2.0?style=for-the-badge
+[issues-url]: https://github.com/TechnoVisionDev/TechnoBot/issues
+[license-shield]: https://img.shields.io/github/license/ReverendTrivium/Eya2.0?style=for-the-badge
+[license-url]: https://github.com/ReverendTrivium/Eya2.0/blob/master/LICENSE
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://www.linkedin.com/in/derrickeberlein/
+
