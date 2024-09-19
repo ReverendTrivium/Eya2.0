@@ -120,7 +120,7 @@ And don’t forget to star the project! Thank you for your support!
 <!-- LICENSE -->
 ## License
 
-Eyazahrid 2.0 is licensed under the terms of [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://github.com/ReverendTrivium/Eya2.0/blob/master/LICENSE) ("CC-BY-NC-SA-4.0"). Commercial use is not allowed under this license. This includes any kind of revenue made with or based upon the software, even donations.
+Eyazahrid 2.0 is licensed under the terms of [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/) ("CC-BY-NC-SA-4.0"). Commercial use is not allowed under this license. This includes any kind of revenue made with or based upon the software, even donations.
 
 The CC-BY-NC-SA-4.0 allows you to:
 - [x] **Share** -- copy and redistribute the material in any medium or format
@@ -142,7 +142,7 @@ More information can be found [here](https://creativecommons.org/licenses/by-nc-
 
 Derrick Eberlein - [@mx.cyberagent](https://www.instagram.com/mx.cyberagent/) - derrickeberlein@gmail.com
 
-Project Link: [https://github.com/TechnoVisionDev/TechnoBot](https://github.com/ReverendTrivium/Eyazahrid-Discord-Bot)
+Project Link: [https://github.com/ReverendTrivium/Eya2.0](https://github.com/ReverendTrivium/Eya2.0)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
