@@ -51,6 +51,7 @@ public class BotCommands extends ListenerAdapter {
         mapCommand(
                 //Fun commands
                 new NSFWCommand(bot),
+                new AnimeCommand(bot),
                 new LoopNSFWCommand(bot),
                 new StopLoopCommand(bot),
                 new JokeCommand(bot),
