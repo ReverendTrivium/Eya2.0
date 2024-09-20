@@ -167,7 +167,7 @@ public class NSFWCommand extends Command {
             // Try fetching a valid media URL with a maximum of 10 attempts
             while (!validMedia && attempts < 10) {
                 attempts++;
-                mediaUrl = redditClient.getRandomNSFWImage(subreddit);
+                mediaUrl = redditClient.getRandomImage(subreddit);
                 System.out.println("Media URL: " + mediaUrl);
                 validMedia = redditClient.isValidUrl(mediaUrl);
                 if (!includeVideos && (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com") || mediaUrl.contains("youtu.be") || mediaUrl.contains("youtube"))) {
@@ -238,7 +238,7 @@ public class NSFWCommand extends Command {
 
             while (!validMedia && attempts < 10) {
                 attempts++;
-                mediaUrl = redditClient.getRandomNSFWImage(subreddit);
+                mediaUrl = redditClient.getRandomImage(subreddit);
                 System.out.println("Media URL: " + mediaUrl);
 
                 //Make sure their are no Comment mediaURLs
