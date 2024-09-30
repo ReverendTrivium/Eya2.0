@@ -2,7 +2,6 @@ package org.eyazahrid.Commands.Fun;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -154,6 +153,7 @@ public class NSFWCommand extends Command {
     private void fetchAndSendMedia(SlashCommandInteractionEvent event, String category, boolean includeVideos, int attempt) {
         if (attempt >= MAX_ATTEMPTS) {
             event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").queue();
+            LoopNSFWCommand.stopLoop();
             return;
         }
 
@@ -183,7 +183,7 @@ public class NSFWCommand extends Command {
 
             if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub")) {
                 if (includeVideos) {
-                    String message = String.format("**Here's a random NSFW video from r/%s:**\n||%s||", subreddit, mediaUrl);
+                    String message = String.format("**Here's a random NSFW video from r/%s:**\n%s", subreddit, mediaUrl);
                     event.getHook().sendMessage(message).queue();
                 } else {
                     throw new IOException("Video found, but videos are not allowed.");
@@ -226,6 +226,7 @@ public class NSFWCommand extends Command {
     private void fetchAndSendMedia(String channelId, String category, int attempt) {
         if (attempt >= MAX_ATTEMPTS) {
             Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage("Failed finding Images after multiple attempts, please try again later.").queue();
+            LoopNSFWCommand.stopLoop();
             return;
         }
 
@@ -253,7 +254,7 @@ public class NSFWCommand extends Command {
             }
 
             if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub")) {
-                String message = String.format("**Here's a random NSFW video from r/%s:**\n||%s||", subreddit, mediaUrl);
+                String message = String.format("**Here's a random NSFW video from r/%s:**\n%s", subreddit, mediaUrl);
                 Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage(message).queue();
             } else if (mediaUrl.endsWith(".gif")) {
                 EmbedBuilder embed = new EmbedBuilder()
