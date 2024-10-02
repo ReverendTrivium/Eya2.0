@@ -176,7 +176,7 @@ public class NSFWCommand extends Command {
 
         boolean includeVideos = event.getOption("video") != null && Objects.requireNonNull(event.getOption("video")).getAsBoolean();
 
-        event.deferReply().queue();
+        event.deferReply().setEphemeral(true).queue();
 
         // Check to make sure Reddit Token isn't expired before running command.
         String token = refreshRedditToken(clientID, secretID, username, password);
@@ -190,11 +190,10 @@ public class NSFWCommand extends Command {
         fetchAndSendMedia(channelId, category, 0, event);
     }
 
-
+    // For single NSFW Image
     private void fetchAndSendMedia(SlashCommandInteractionEvent event, String category, boolean includeVideos, int attempt) {
         if (attempt >= MAX_ATTEMPTS) {
             event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
-            LoopNSFWCommand.stopLoop();
             return;
         }
 
@@ -210,22 +209,40 @@ public class NSFWCommand extends Command {
                 attempts++;
                 mediaUrl = redditClient.getRandomImage(subreddit);
                 System.out.println("Media URL: " + mediaUrl);
+
+                // If the response contains no data (e.g., `"children": []`), retry
+                if (mediaUrl == null || mediaUrl.isEmpty()) {
+                    System.out.println("Empty or invalid media URL, retrying...");
+                    continue; // Retry without incrementing the attempt
+                }
+
                 validMedia = redditClient.isValidUrl(mediaUrl);
+
+                // If videos are not allowed and media is a video, skip it
                 if (!includeVideos && (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com") || mediaUrl.contains("youtu.be") || mediaUrl.contains("youtube"))) {
-                    validMedia = false; // Skip videos if not desired
+                    validMedia = false;
                 } else if (mediaUrl.contains("/comments") || mediaUrl.contains("imgur.com")) {
+                    // Skip comments or imgur URLs
                     validMedia = false;
                 }
             }
 
+            // If still no valid media after attempts, retry fetching
+            if (!validMedia) {
+                fetchAndSendMedia(event, category, includeVideos, attempt + 1);
+                return;
+            }
+
+            // Adjust Redgifs URL if necessary
             if (mediaUrl.contains("redgifs.com/ifr")) {
                 mediaUrl = mediaUrl.replace("ifr", "watch");
             }
 
+            // Process the valid media URL
             if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub") || mediaUrl.contains("hentaigoodie")) {
                 if (includeVideos) {
                     String message = String.format("**Here's a random NSFW video from r/%s:**\n%s", subreddit, mediaUrl);
-                    event.getHook().sendMessage(message).queue();
+                    event.getHook().sendMessage(message).queue(); // Respond to the deferred reply
                 } else {
                     throw new IOException("Video found, but videos are not allowed.");
                 }
@@ -264,6 +281,8 @@ public class NSFWCommand extends Command {
         }
     }
 
+
+    // For Looping NSFW Images
     private void fetchAndSendMedia(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
         // Get Reddit Token Variables and Initialize Config
         Dotenv config = bot.getConfig();
