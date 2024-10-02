@@ -176,7 +176,7 @@ public class NSFWCommand extends Command {
 
         boolean includeVideos = event.getOption("video") != null && Objects.requireNonNull(event.getOption("video")).getAsBoolean();
 
-        event.deferReply().setEphemeral(true).queue();
+        event.deferReply().queue();
 
         // Check to make sure Reddit Token isn't expired before running command.
         String token = refreshRedditToken(clientID, secretID, username, password);

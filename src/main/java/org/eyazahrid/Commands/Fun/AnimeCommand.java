@@ -124,7 +124,7 @@ public class AnimeCommand extends Command {
         String category =  "anime";
 
         boolean includeVideos = true;
-        event.deferReply().setEphemeral(true).queue();
+        event.deferReply().queue();
         fetchAndSendMedia(event, category, includeVideos, 0);
     }
 
