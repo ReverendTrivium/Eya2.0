@@ -235,5 +235,4 @@ public class AnimeCommand extends Command {
             fetchAndSendMedia(event, category, includeVideos, attempt + 1);
         }
     }
-
 }
