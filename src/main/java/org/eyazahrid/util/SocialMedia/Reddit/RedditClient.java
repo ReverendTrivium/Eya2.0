@@ -47,6 +47,13 @@ public class RedditClient {
             String responseData = Objects.requireNonNull(response.body()).string();
             System.out.println("Raw Response Data: " + responseData); // For debugging the raw response
 
+            // Check if the response contains an empty 'children' list
+            if (responseData.contains("\"children\": []")) {
+                System.out.println("Empty response detected, retrying...");
+                // Retry with a new request (recursive call or generate a new request)
+                return getRandomImage(subreddit);
+            }
+
             if (responseData.trim().isEmpty()) {
                 throw new IOException("Received an empty response from Reddit API.");
             }
