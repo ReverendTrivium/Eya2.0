@@ -101,6 +101,33 @@ public class NSFWCommand extends Command {
         }
     }
 
+    private String refreshRedditToken(String clientId, String clientSecret, String username, String password) {
+        System.out.println("Checking Reddit Token Status...");
+        Document tokenDocument = bot.database.getRedditToken();
+        if (tokenDocument != null) {
+            System.out.println("Checking to see if Token is Expired...");
+            Instant expiration = tokenDocument.getDate("expiration").toInstant();
+            if (Instant.now().isBefore(expiration)) {
+                System.out.println("Token Not Expired!!");
+                return tokenDocument.getString("token");
+            }
+        }
+
+        try {
+            System.out.println("Setting new Reddit Token...");
+            String token = redditOAuth.authenticate(clientId, clientSecret, username, password);
+            Instant expiration = Instant.now().plusSeconds(24 * 60 * 60); // 24 hours
+            bot.database.clearRedditToken();
+            bot.database.storeRedditToken(token, expiration);
+            return token;
+        } catch (IOException e) {
+            System.out.println("Failed to authenticate with Reddit API");
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
     private String getRedditToken(String clientId, String clientSecret, String username, String password) {
         Document tokenDocument = bot.database.getRedditToken();
         if (tokenDocument != null) {
@@ -137,23 +164,37 @@ public class NSFWCommand extends Command {
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
+        // Get Reddit Token Variables and Initialize Config
+        Dotenv config = bot.getConfig();
+        String clientID = config.get("REDDIT_CLIENT_ID");
+        String secretID = config.get("REDDIT_SECRET_ID");
+        String username = config.get("REDDIT_USERNAME");
+        String password = config.get("REDDIT_PASSWORD");
+
         OptionMapping categoryOption = event.getOption("category");
         String category = (categoryOption != null) ? categoryOption.getAsString() : "nsfw"; // Default category if none provided
 
         boolean includeVideos = event.getOption("video") != null && Objects.requireNonNull(event.getOption("video")).getAsBoolean();
 
         event.deferReply().queue();
-        fetchAndSendMedia(event, category, includeVideos, 0);
+
+        // Check to make sure Reddit Token isn't expired before running command.
+        String token = refreshRedditToken(clientID, secretID, username, password);
+
+        if (token != null) {
+            fetchAndSendMedia(event, category, includeVideos, 0);
+        }
     }
 
-    public void executeCategory(String channelId, String category) {
-        fetchAndSendMedia(channelId, category, 0);
+    public void executeCategory(String channelId, String category, SlashCommandInteractionEvent event) {
+        fetchAndSendMedia(channelId, category, 0, event);
     }
 
 
     private void fetchAndSendMedia(SlashCommandInteractionEvent event, String category, boolean includeVideos, int attempt) {
         if (attempt >= MAX_ATTEMPTS) {
-            event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").queue();
+            event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
+            LoopNSFWCommand.stopLoop();
             return;
         }
 
@@ -167,7 +208,7 @@ public class NSFWCommand extends Command {
             // Try fetching a valid media URL with a maximum of 10 attempts
             while (!validMedia && attempts < 10) {
                 attempts++;
-                mediaUrl = redditClient.getRandomNSFWImage(subreddit);
+                mediaUrl = redditClient.getRandomImage(subreddit);
                 System.out.println("Media URL: " + mediaUrl);
                 validMedia = redditClient.isValidUrl(mediaUrl);
                 if (!includeVideos && (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com") || mediaUrl.contains("youtu.be") || mediaUrl.contains("youtube"))) {
@@ -223,9 +264,25 @@ public class NSFWCommand extends Command {
         }
     }
 
-    private void fetchAndSendMedia(String channelId, String category, int attempt) {
+    private void fetchAndSendMedia(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
+        // Get Reddit Token Variables and Initialize Config
+        Dotenv config = bot.getConfig();
+        String clientID = config.get("REDDIT_CLIENT_ID");
+        String secretID = config.get("REDDIT_SECRET_ID");
+        String username = config.get("REDDIT_USERNAME");
+        String password = config.get("REDDIT_PASSWORD");
+
+        // Check to make sure Reddit Token isn't expired before running command.
+        String token = refreshRedditToken(clientID, secretID, username, password);
+
+        if (token == null) {
+            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage("RedditToken Refresh failed, contact Bot Administrator for support.").queue();
+            return;
+        }
+
         if (attempt >= MAX_ATTEMPTS) {
-            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage("Failed finding Images after multiple attempts, please try again later.").queue();
+            event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
+            LoopNSFWCommand.stopLoop();
             return;
         }
 
@@ -238,7 +295,7 @@ public class NSFWCommand extends Command {
 
             while (!validMedia && attempts < 10) {
                 attempts++;
-                mediaUrl = redditClient.getRandomNSFWImage(subreddit);
+                mediaUrl = redditClient.getRandomImage(subreddit);
                 System.out.println("Media URL: " + mediaUrl);
 
                 //Make sure their are no Comment mediaURLs
@@ -264,7 +321,7 @@ public class NSFWCommand extends Command {
             } else if (mediaUrl.contains("reddit.com/gallery")) {
                 List<String> galleryUrls = redditClient.getGalleryImages(mediaUrl);
                 if (galleryUrls.isEmpty()) {
-                    fetchAndSendMedia(channelId, category, attempt + 1); // Retry with a new media URL
+                    fetchAndSendMedia(channelId, category, attempt + 1, event); // Retry with a new media URL
                     return;
                 }
                 EmbedBuilder embed = new EmbedBuilder()
@@ -286,7 +343,7 @@ public class NSFWCommand extends Command {
             }
         } catch (IOException e) {
             System.out.println("Failed finding Images, Retrying...");
-            fetchAndSendMedia(channelId, category, attempt + 1);
+            fetchAndSendMedia(channelId, category, attempt + 1, event);
         }
     }
 }

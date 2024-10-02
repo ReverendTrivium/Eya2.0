@@ -22,7 +22,7 @@ public class RedditClient {
         this.random = new Random();
     }
 
-    public String getRandomNSFWImage(String subreddit) throws IOException {
+    public String getRandomImage(String subreddit) throws IOException {
         String[] endpoints = {"hot", "new", "top"};
         String endpoint = endpoints[random.nextInt(endpoints.length)];
         String url = "https://oauth.reddit.com/r/" + subreddit + "/" + endpoint + ".json?limit=50";
