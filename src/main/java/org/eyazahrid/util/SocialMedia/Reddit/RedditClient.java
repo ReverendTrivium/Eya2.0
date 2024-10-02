@@ -45,7 +45,7 @@ public class RedditClient {
             }
 
             String responseData = Objects.requireNonNull(response.body()).string();
-            System.out.println("Raw Response Data: " + responseData); // For debugging the raw response
+            //System.out.println("Raw Response Data: " + responseData); // For debugging the raw response
 
             // Check if the response contains an empty 'children' list
             if (responseData.contains("\"children\": []")) {
@@ -58,18 +58,15 @@ public class RedditClient {
                 throw new IOException("Received an empty response from Reddit API.");
             }
 
-            // Use lenient parsing to handle potentially malformed JSON
-            JsonReader reader = new JsonReader(new StringReader(responseData));
-            reader.setLenient(true); // Allow lenient parsing to avoid errors with slightly malformed JSON
+            JsonArray children;
 
             List<String> mediaUrls = new ArrayList<>();
-            JsonArray children;
 
             if (url.contains("random")) {
                 // Handle random.json response
                 try {
                     System.out.println("Parsing random JSON response...");
-                    JsonArray arr = JsonParser.parseReader(reader).getAsJsonArray();
+                    JsonArray arr = JsonParser.parseString(responseData).getAsJsonArray();
                     if (!arr.isEmpty()) {
                         JsonObject data = arr.get(0).getAsJsonObject().getAsJsonObject("data");
                         children = data.getAsJsonArray("children");
@@ -77,12 +74,12 @@ public class RedditClient {
                         throw new IOException("No data found in random.json response.");
                     }
                 } catch (IllegalStateException e) {
-                    JsonObject obj = JsonParser.parseReader(reader).getAsJsonObject();
+                    JsonObject obj = JsonParser.parseString(responseData).getAsJsonObject();
                     children = obj.getAsJsonObject("data").getAsJsonArray("children");
                 }
             } else {
                 // Handle hot, new, top responses
-                JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+                JsonObject jsonObject = JsonParser.parseString(responseData).getAsJsonObject();
                 children = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
             }
 
