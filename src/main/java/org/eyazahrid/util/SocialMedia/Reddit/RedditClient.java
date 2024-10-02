@@ -1,8 +1,6 @@
 package org.eyazahrid.util.SocialMedia.Reddit;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -42,24 +40,32 @@ public class RedditClient {
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response);
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected response code: " + response.code());
+            }
 
             String responseData = Objects.requireNonNull(response.body()).string();
+            System.out.println("Raw Response Data: " + responseData); // For debugging the raw response
 
-            // Log the raw response for debugging
-            System.out.println("Response Data: " + responseData);
+            if (responseData.trim().isEmpty()) {
+                throw new IOException("Received an empty response from Reddit API.");
+            }
 
-            // Use a lenient JsonReader to handle slightly malformed JSON
+            // Use lenient parsing to handle potentially malformed JSON
             JsonReader reader = new JsonReader(new StringReader(responseData));
-            reader.setLenient(true);  // Allow lenient parsing
+            reader.setLenient(true); // Allow lenient parsing to avoid errors with slightly malformed JSON
 
+            List<String> mediaUrls = new ArrayList<>();
             JsonArray children;
 
             if (url.contains("random")) {
+                // Handle random.json response
                 try {
+                    System.out.println("Parsing random JSON response...");
                     JsonArray arr = JsonParser.parseReader(reader).getAsJsonArray();
                     if (!arr.isEmpty()) {
-                        children = arr.get(0).getAsJsonObject().getAsJsonObject("data").getAsJsonArray("children");
+                        JsonObject data = arr.get(0).getAsJsonObject().getAsJsonObject("data");
+                        children = data.getAsJsonArray("children");
                     } else {
                         throw new IOException("No data found in random.json response.");
                     }
@@ -68,14 +74,14 @@ public class RedditClient {
                     children = obj.getAsJsonObject("data").getAsJsonArray("children");
                 }
             } else {
+                // Handle hot, new, top responses
                 JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
                 children = jsonObject.getAsJsonObject("data").getAsJsonArray("children");
             }
 
             // Extract valid media URLs
-            List<String> mediaUrls = new ArrayList<>();
-            for (int i = 0; i < children.size(); i++) {
-                JsonObject postData = children.get(i).getAsJsonObject().getAsJsonObject("data");
+            for (JsonElement child : children) {
+                JsonObject postData = child.getAsJsonObject().getAsJsonObject("data");
                 String mediaUrl = extractMediaUrl(postData);
                 if (mediaUrl != null) {
                     mediaUrls.add(mediaUrl);
@@ -86,17 +92,29 @@ public class RedditClient {
                 throw new IOException("No valid media URLs found.");
             }
 
+            // Shuffle the URLs and return a random one
             Collections.shuffle(mediaUrls);
             return mediaUrls.get(0);
+        } catch (JsonSyntaxException e) {
+            System.out.println("JSON Syntax Error: " + e.getMessage());
+            e.printStackTrace();
+            throw new IOException("Failed to parse the Reddit response JSON.");
         }
     }
 
-    private String extractMediaUrl(JsonObject mediaData) {
-        // Simplified extraction logic, this should be adapted based on the actual Reddit JSON response structure
-        if (mediaData.has("url")) {
-            return mediaData.get("url").getAsString();
-        } else if (mediaData.has("media")) {
-            JsonObject media = mediaData.getAsJsonObject("media");
+    /**
+     * Extracts a media URL (image, gif, or video) from the given post data.
+     * Adjust this method to your specific needs based on Reddit's post structure.
+     *
+     * @param postData The post's JSON data object.
+     * @return The URL to the media (image or video), or null if no valid URL was found.
+     */
+    private String extractMediaUrl(JsonObject postData) {
+        // Simplified logic: Adjust based on Reddit's JSON structure
+        if (postData.has("url")) {
+            return postData.get("url").getAsString();
+        } else if (postData.has("media")) {
+            JsonObject media = postData.getAsJsonObject("media");
             if (media.has("reddit_video")) {
                 return media.getAsJsonObject("reddit_video").get("fallback_url").getAsString();
             }
@@ -104,14 +122,21 @@ public class RedditClient {
         return null;
     }
 
+    /**
+     * Checks if a URL is valid by performing a HEAD request.
+     *
+     * @param url The URL to check.
+     * @return True if the URL is valid, false otherwise.
+     * @throws IOException If the request fails.
+     */
     public boolean isValidUrl(String url) throws IOException {
         Request request = new Request.Builder()
                 .url(url)
-                .head()
+                .head()  // Perform a HEAD request
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
-            return response.isSuccessful() && response.body() != null;
+            return response.isSuccessful();
         }
     }
 
