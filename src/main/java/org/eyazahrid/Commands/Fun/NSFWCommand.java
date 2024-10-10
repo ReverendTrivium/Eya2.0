@@ -176,6 +176,8 @@ public class NSFWCommand extends Command {
         boolean includeVideos = event.getOption("video") != null && Objects.requireNonNull(event.getOption("video")).getAsBoolean();
 
         event.deferReply().queue();
+
+        // Set Attempt Count for fetching NSFW Image
         int attempt = 0;
 
         // Check to make sure Reddit Token isn't expired before running command.
