@@ -180,6 +180,13 @@ public class NSFWCommand extends Command {
         // Set Attempt Count for fetching NSFW Image
         int attempt = 0;
 
+        // Check to ensure this is an NSFW Channel
+        if (!event.getChannel().asTextChannel().isNSFW()) {
+            System.out.println("This is not an NSFW Channel");
+            event.getHook().sendMessage("This is not an NSFW Channel, cannot run NSFW Command in this channel").queue();
+            return;
+        }
+
         // Check to make sure Reddit Token isn't expired before running command.
         String token = refreshRedditToken(clientID, secretID, username, password);
 
