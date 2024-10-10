@@ -206,11 +206,10 @@ public class NSFWCommand extends Command {
 
         String mediaUrl = null;
         boolean validMedia = false;
-        int attempts = 0;
 
         // Try fetching a valid media URL with a maximum of 10 attempts
-        while (!validMedia && attempts < 10) {
-            attempts++;
+        while (!validMedia && attempt < 10) {
+            attempt++;
             try {
                 mediaUrl = redditClient.getRandomImage(subreddit);
             } catch (IOException e) {
