@@ -176,20 +176,25 @@ public class NSFWCommand extends Command {
         boolean includeVideos = event.getOption("video") != null && Objects.requireNonNull(event.getOption("video")).getAsBoolean();
 
         event.deferReply().queue();
+        int attempt = 0;
 
         // Check to make sure Reddit Token isn't expired before running command.
         String token = refreshRedditToken(clientID, secretID, username, password);
 
         if (token != null) {
-            fetchAndSendMedia(event, category, includeVideos, 0);
+            fetchAndSendMedia(event, category, includeVideos, attempt);
         }
     }
 
     public void executeCategory(String channelId, String category, SlashCommandInteractionEvent event) {
-        fetchAndSendMedia(channelId, category, 0, event);
+        // Set Int Attempts before it stops trying to find Images for LoopNSFW command
+        int attempt = 0;
+
+        // Call Loop Command
+        fetchAndSendMedia(channelId, category, attempt, event);
     }
 
-
+    // Fetch Single NSFW Image
     private void fetchAndSendMedia(SlashCommandInteractionEvent event, String category, boolean includeVideos, int attempt) {
         if (attempt >= MAX_ATTEMPTS) {
             event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
@@ -234,7 +239,9 @@ public class NSFWCommand extends Command {
                 event.getHook().sendMessage(message).queue();
             } else {
                 System.out.println("Video found, but videos are not allowed.");
-                fetchAndSendMedia(event, category, includeVideos, attempt);
+
+                // Fetch new Image
+                fetchAndSendMedia(event, category, false, attempt);
             }
         } else if (mediaUrl.endsWith(".gif")) {
             EmbedBuilder embed = new EmbedBuilder()
@@ -267,6 +274,7 @@ public class NSFWCommand extends Command {
         }
     }
 
+    // For Looping NSFW Image
     private void fetchAndSendMedia(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
         // Get Reddit Token Variables and Initialize Config
         Dotenv config = bot.getConfig();
@@ -285,6 +293,9 @@ public class NSFWCommand extends Command {
 
         if (attempt >= MAX_ATTEMPTS) {
             event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
+            System.out.println("Stopping Loop NSFW Command");
+
+            // Stop NSFW Loop
             LoopNSFWCommand.stopLoop();
             return;
         }
@@ -293,10 +304,10 @@ public class NSFWCommand extends Command {
 
         String mediaUrl = null;
         boolean validMedia = false;
-        int attempts = 0;
 
-        while (!validMedia && attempts < 10) {
-            attempts++;
+
+        while (!validMedia && attempt < 10) {
+            attempt++;
             try {
                 mediaUrl = redditClient.getRandomImage(subreddit);
             } catch (IOException e) {
