@@ -191,7 +191,7 @@ public class NSFWCommand extends Command {
         int attempt = 0;
 
         // Call Loop Command
-        fetchAndSendMedia(channelId, category, attempt, event);
+        fetchAndSendMediaLoop(channelId, category, attempt, event);
     }
 
     // Fetch Single NSFW Image
@@ -275,7 +275,7 @@ public class NSFWCommand extends Command {
     }
 
     // For Looping NSFW Image
-    private void fetchAndSendMedia(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
+    private void fetchAndSendMediaLoop(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
         // Get Reddit Token Variables and Initialize Config
         Dotenv config = bot.getConfig();
         String clientID = config.get("REDDIT_CLIENT_ID");
@@ -342,7 +342,7 @@ public class NSFWCommand extends Command {
         } else if (mediaUrl.contains("reddit.com/gallery")) {
             List<String> galleryUrls = redditClient.getGalleryImages(mediaUrl);
             if (galleryUrls.isEmpty()) {
-                fetchAndSendMedia(channelId, category, attempt + 1, event); // Retry with a new media URL
+                fetchAndSendMediaLoop(channelId, category, attempt + 1, event); // Retry with a new media URL
                 return;
             }
             EmbedBuilder embed = new EmbedBuilder()
