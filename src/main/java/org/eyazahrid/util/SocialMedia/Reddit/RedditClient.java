@@ -7,20 +7,37 @@ import okhttp3.Response;
 import org.jsoup.Jsoup;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.*;
 
 public class RedditClient {
     private final OkHttpClient httpClient;
-    private final String accessToken;
+    private String accessToken;
     private final Random random;
+    private final RedditOAuth redditOAuth;
+    private Instant tokenExpiration; // Track when the token expires
 
-    public RedditClient(OkHttpClient httpClient, String accessToken) {
+    public RedditClient(OkHttpClient httpClient, String accessToken, RedditOAuth redditOAuth, Instant tokenExpiration) {
         this.httpClient = httpClient;
         this.accessToken = accessToken;
+        this.redditOAuth = redditOAuth;
         this.random = new Random();
+        this.tokenExpiration = tokenExpiration;
+    }
+
+    // Method to check if the token has expired and refresh it if necessary
+    private void refreshTokenIfNeeded() throws IOException {
+        if (Instant.now().isAfter(tokenExpiration)) {
+            System.out.println("Refreshing Reddit OAuth token...");
+            this.accessToken = redditOAuth.refreshToken(); // This method should request a new token
+            this.tokenExpiration = Instant.now().plusSeconds(3600); // Update token expiration time (assuming 1-hour expiry)
+        }
     }
 
     public String getRandomImage(String subreddit) throws IOException {
+        // Refresh the token if it's expired or about to expire
+        refreshTokenIfNeeded();
+
         String[] endpoints = {"hot", "new", "top"};
         String endpoint = endpoints[random.nextInt(endpoints.length)];
         String url = "https://oauth.reddit.com/r/" + subreddit + "/" + endpoint + ".json?limit=50";
@@ -39,17 +56,20 @@ public class RedditClient {
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
+                // If we get a 401, refresh the token and retry
+                if (response.code() == 401) {
+                    System.out.println("Token expired, refreshing and retrying...");
+                    refreshTokenIfNeeded(); // Refresh the token
+                    return getRandomImage(subreddit); // Retry the request
+                }
                 throw new IOException("Unexpected response code: " + response.code());
             }
 
             String responseData = Objects.requireNonNull(response.body()).string();
-            //System.out.println("Raw Response Data: " + responseData); // For debugging the raw response
 
-            // Check if the response contains an empty 'children' list
             if (responseData.contains("\"children\": []")) {
                 System.out.println("Empty response detected, retrying...");
-                // Retry with a new request (recursive call or generate a new request)
-                return getRandomImage(subreddit);
+                return getRandomImage(subreddit); // Retry with a new request (recursive call)
             }
 
             if (responseData.trim().isEmpty()) {
@@ -94,7 +114,6 @@ public class RedditClient {
                 throw new IOException("No valid media URLs found.");
             }
 
-            // Shuffle the URLs and return a random one
             Collections.shuffle(mediaUrls);
             return mediaUrls.get(0);
         } catch (JsonSyntaxException e) {
@@ -148,7 +167,7 @@ public class RedditClient {
             org.jsoup.nodes.Document doc = Jsoup.connect(galleryUrl).get();
 
             // Log the fetched HTML to the console for inspection
-           // System.out.println(doc.html());
+            // System.out.println(doc.html());
 
             doc.select("a[href]").forEach(element -> {
                 String url = element.attr("href");
@@ -164,5 +183,3 @@ public class RedditClient {
         return imageUrls;
     }
 }
-
-

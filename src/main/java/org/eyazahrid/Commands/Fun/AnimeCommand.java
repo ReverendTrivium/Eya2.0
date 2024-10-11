@@ -51,7 +51,7 @@ public class AnimeCommand extends Command {
         // Initialize the RedditClient with your access token
         if (token != null) {
             System.out.println("Initializing RedditClient...");
-            this.redditClient = new RedditClient(bot.httpClient, token);
+            this.redditClient = new RedditClient(bot.httpClient, token, this.redditOAuth, bot.database.getRedditToken().getDate("expiration").toInstant());
             System.out.println("RedditClient initialized with token");
         } else {
             System.out.println("Token was null, RedditClient not initialized");
