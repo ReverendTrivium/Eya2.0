@@ -88,6 +88,10 @@ public class GuildData {
         return database.getGuildCollection(guildId, "user_intro_messages");
     }
 
+    public MongoCollection<Document> getLoopNSFWStateCollection() {
+        return database.getGuildCollection(guildId, "LoopNSFWCommand");
+    }
+
     public String getGuildId() {
         return String.valueOf(guildId);
     }

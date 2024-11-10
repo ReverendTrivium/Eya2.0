@@ -16,6 +16,7 @@ import java.util.TimerTask;
 public class LoopNSFWCommand extends Command {
 
     private static Timer timer;
+    private String currentCategory;
 
     public LoopNSFWCommand(Eyazahrid bot) {
         super(bot);
@@ -52,6 +53,8 @@ public class LoopNSFWCommand extends Command {
         String category = Objects.requireNonNull(event.getOption("category")).getAsString();
         NSFWCommand nsfwCommand = (NSFWCommand) BotCommands.commandsMap.get("nsfw");
 
+        currentCategory = category;
+
         // Check to ensure this is an NSFW Channel
         if (!event.getChannel().asTextChannel().isNSFW()) {
             System.out.println("This is not an NSFW Channel");
@@ -74,13 +77,53 @@ public class LoopNSFWCommand extends Command {
             }
         }, 60000, 60000); // 600000ms = 10 minutes
 
+        // Save the loop state to the database
+        bot.getDatabase().saveLoopNSFWState(Long.parseLong(Objects.requireNonNull(event.getGuild()).getId()), true, category, event.getChannel().getId());
+
+
         event.getHook().sendMessage("Looping NSFW posts from category: " + category).queue();
     }
 
-    public static void stopLoop() {
+    // Restart NSFWLoop if it was running when bot shutdown
+    public void startLoop(String channelId, String category, long guildId) {
+        // Ensure the loop is stopped if already running
+        stopLoop(guildId, channelId);
+
+        NSFWCommand nsfwCommand = (NSFWCommand) BotCommands.commandsMap.get("nsfw");
+
+        // Print the first image immediately
+        nsfwCommand.executeCategory(channelId, category, null);
+
+        // Initialize the timer and schedule the NSFW loop task
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                // Fetch NSFWCommand and execute it with the saved category
+                NSFWCommand nsfwCommand = (NSFWCommand) BotCommands.commandsMap.get("nsfw");
+                if (nsfwCommand != null) {
+                    nsfwCommand.executeCategory(channelId, category, null);
+                }
+            }
+        }, 60000, 60000); // Runs every 10 minutes
+
+        // Save the loop state to the database
+        bot.getDatabase().saveLoopNSFWState(guildId, true, category, channelId);
+
+        System.out.println("Started NSFW loop in channel: " + channelId + " with category: " + category);
+    }
+
+    public void stopLoop(long guildId, String channelId ) {
         if (timer != null) {
             timer.cancel();
             timer = null;
         }
+        // Set NSFW Loop status to false
+        setStatus(guildId, channelId);
+    }
+
+    public void setStatus(long guildId, String channelId) {
+        // Set NSFW Loop status to false
+        bot.getDatabase().saveLoopNSFWState(guildId, false, currentCategory, channelId);
     }
 }

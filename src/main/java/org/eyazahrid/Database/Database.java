@@ -69,6 +69,7 @@ public class Database {
         MongoCollection<Document> userIntroMessages = getGuildCollection(guildId, "user_intro_messages");
         MongoCollection<Greetings> greetings = getGuildCollection(guildId, "greetings").withDocumentClass(Greetings.class);
         MongoCollection<Document> economy = getGuildCollection(guildId, "economy");
+        MongoCollection<Document> LoopNSFWState = getGuildCollection(guildId, "LoopNSFWCommand");
 
         // Add config collection for guild
         MongoCollection<Document> config = getGuildCollection(guildId, "config");
@@ -80,6 +81,7 @@ public class Database {
         userIntroMessages.createIndex(Indexes.descending("userId"));
         greetings.createIndex(Indexes.descending("guild"));
         economy.createIndex(Indexes.descending("economy"));
+        LoopNSFWState.createIndex(Indexes.descending("loopnsfwstate"));
 
         // Set up index for config collection if necessary
         config.createIndex(Indexes.descending("guildId"));
@@ -186,5 +188,26 @@ public class Database {
 
     public MongoCollection<Config> getConfigCollection() {
         return config;
+    }
+
+    public void saveLoopNSFWState(long guildId, boolean isRunning, String category, String channelId) {
+        MongoCollection<Document> loopNSFWStateCollection = getGuildCollection(guildId, "LoopNSFWCommand");
+
+        Document state = new Document("guildId", guildId)
+                .append("isRunning", isRunning)
+                .append("category", category)
+                .append("channelID", channelId)
+                .append("lastUpdated", Instant.now());
+
+        loopNSFWStateCollection.updateOne(
+                Filters.eq("guildId", guildId),
+                new Document("$set", state),
+                new UpdateOptions().upsert(true)
+        );
+    }
+
+    public Document getLoopNSFWState(long guildId) {
+        MongoCollection<Document> loopNSFWStateCollection = getGuildCollection(guildId, "LoopNSFWCommand");
+        return loopNSFWStateCollection.find(Filters.eq("guildId", guildId)).first();
     }
 }

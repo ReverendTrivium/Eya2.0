@@ -23,13 +23,15 @@ public class NSFWCommand extends Command {
     private final RedditOAuth redditOAuth;
     private final Eyazahrid bot;
     private static final int MAX_ATTEMPTS = 10;
+    private final LoopNSFWCommand loopNSFWCommand;
 
     // Mapping of categories to subreddits
     private final Map<String, List<String>> categoryToSubreddits;
 
-    public NSFWCommand(Eyazahrid bot) {
+    public NSFWCommand(Eyazahrid bot, LoopNSFWCommand loopNSFWCommand) {
         super(bot);
         this.bot = bot;
+        this.loopNSFWCommand = loopNSFWCommand;
         System.out.println("Initializing NSFWCommand...");
         Dotenv config = bot.getConfig();
 
@@ -207,7 +209,6 @@ public class NSFWCommand extends Command {
     private void fetchAndSendMedia(SlashCommandInteractionEvent event, String category, boolean includeVideos, int attempt) {
         if (attempt >= MAX_ATTEMPTS) {
             event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
-            LoopNSFWCommand.stopLoop();
             return;
         }
 
@@ -304,7 +305,7 @@ public class NSFWCommand extends Command {
             System.out.println("Stopping Loop NSFW Command");
 
             // Stop NSFW Loop
-            LoopNSFWCommand.stopLoop();
+            loopNSFWCommand.stopLoop(Long.parseLong(Objects.requireNonNull(event.getGuild()).getId()), event.getChannel().getId());
             return;
         }
 
