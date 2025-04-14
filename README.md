@@ -17,7 +17,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/ReverendTrivium/Eya2.0">
-    <img src="https://i.imgur.com/VgHXeiE.png" alt="Logo" width="150" height="150">
+    <img src="https://i.imgur.com/O8QGyvv.png" alt="Logo" width="150" height="150">
   </a>
 
 <h3 align="center">Eyazahrid 2.0</h3>
