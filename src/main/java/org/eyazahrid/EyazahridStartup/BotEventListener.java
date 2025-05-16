@@ -31,17 +31,6 @@ public class BotEventListener extends ListenerAdapter {
         // Initialize for all guilds the bot is already in
         for (Guild guild : event.getJDA().getGuilds()) {
             initializeGuild(guild);
-
-            // Check and restart NSFW loop if it was active before shutdown
-            Document loopStateDoc = bot.getDatabase().getLoopNSFWState(guild.getIdLong());
-            if (loopStateDoc != null && loopStateDoc.getBoolean("isRunning", false)) {
-                System.out.println("Restarting NSFWLoop...");
-                String category = loopStateDoc.getString("category");
-                if (category != null) {
-                    String channelID = loopStateDoc.getString("channelID");
-                    restartNSFWLoop(guild, category, channelID);
-                }
-            }
         }
     }
 
@@ -80,14 +69,5 @@ public class BotEventListener extends ListenerAdapter {
 
         // Check and create a greetings collection entry if it doesn't exist
         bot.database.initializeGreetingsForGuild(guild.getIdLong());
-    }
-
-    private void restartNSFWLoop(Guild guild, String category, String channelId) {
-        // Get LoopNSFWCommand from BotCommands and restart the loop
-        LoopNSFWCommand loopNSFWCommand = (LoopNSFWCommand) botCommands.getCommandByName("loopnsfw");
-        if (loopNSFWCommand != null) {
-            loopNSFWCommand.startLoop(channelId, category, guild.getIdLong());
-            System.out.println("Restarted NSFW loop for category: " + category + " in guild: " + guild.getName());
-        }
     }
 }

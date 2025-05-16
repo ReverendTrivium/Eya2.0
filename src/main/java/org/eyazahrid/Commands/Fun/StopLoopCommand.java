@@ -9,21 +9,18 @@ import org.eyazahrid.Eyazahrid;
 import java.util.Objects;
 
 public class StopLoopCommand extends Command {
-    private final LoopNSFWCommand loopNSFWCommand;
 
-    public StopLoopCommand(Eyazahrid bot, LoopNSFWCommand loopNSFWCommand) {
+    public StopLoopCommand(Eyazahrid bot) {
         super(bot);
         this.name = "stoploop";
         this.description = "Stop the looping NSFW posts.";
         this.permission = Permission.MANAGE_SERVER;
         this.category = Category.FUN;
-        this.loopNSFWCommand = loopNSFWCommand;
     }
 
     @Override
     public void execute(SlashCommandInteractionEvent event) {
-        loopNSFWCommand.stopLoop(Long.parseLong(Objects.requireNonNull(event.getGuild()).getId()), event.getChannel().getId());
+        LoopNSFWCommand.stopLoop();
         event.reply("Stopped looping NSFW posts.").setEphemeral(true).queue();
     }
 }
-

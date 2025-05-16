@@ -48,10 +48,10 @@ public class BotCommands extends ListenerAdapter {
         GoogleSearchService googleSearchService = new GoogleSearchService();
         mapCommand(
                 //Fun commands
-                new NSFWCommand(bot, new LoopNSFWCommand(bot)),
+                new NSFWCommand(bot),
                 new AnimeCommand(bot),
                 new LoopNSFWCommand(bot),
-                new StopLoopCommand(bot, new LoopNSFWCommand(bot)),
+                new StopLoopCommand(bot),
                 new JokeCommand(bot),
                 new welcome(bot),
                 new EightBallCommand(bot),
