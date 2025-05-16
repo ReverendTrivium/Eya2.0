@@ -3,7 +3,6 @@ package org.eyazahrid.Commands;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
@@ -12,7 +11,6 @@ import org.eyazahrid.Commands.Fun.*;
 import org.eyazahrid.Commands.Utility.*;
 import org.eyazahrid.Commands.Moderation.*;
 import org.eyazahrid.Commands.Utility.HelpSubCommands.*;
-import org.eyazahrid.Database.Data.GuildData;
 import org.eyazahrid.Eyazahrid;
 
 import java.util.ArrayList;
@@ -50,10 +48,10 @@ public class BotCommands extends ListenerAdapter {
         GoogleSearchService googleSearchService = new GoogleSearchService();
         mapCommand(
                 //Fun commands
-                new NSFWCommand(bot),
+                new NSFWCommand(bot, new LoopNSFWCommand(bot)),
                 new AnimeCommand(bot),
                 new LoopNSFWCommand(bot),
-                new StopLoopCommand(bot),
+                new StopLoopCommand(bot, new LoopNSFWCommand(bot)),
                 new JokeCommand(bot),
                 new welcome(bot),
                 new EightBallCommand(bot),
