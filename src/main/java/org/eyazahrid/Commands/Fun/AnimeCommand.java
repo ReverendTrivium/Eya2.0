@@ -9,6 +9,7 @@ import org.eyazahrid.Commands.Command;
 import org.eyazahrid.Eyazahrid;
 import org.eyazahrid.util.SocialMedia.Reddit.RedditClient;
 import org.eyazahrid.util.SocialMedia.Reddit.RedditOAuth;
+import org.eyazahrid.util.SocialMedia.Reddit.RedditTokenManager;
 import org.eyazahrid.util.embeds.EmbedColor;
 
 import java.io.IOException;
@@ -17,9 +18,13 @@ import java.util.*;
 
 public class AnimeCommand extends Command {
     private RedditClient redditClient;
-    private final RedditOAuth redditOAuth;
     private final Eyazahrid bot;
     private static final int MAX_ATTEMPTS = 10;
+    private static final String[] SUBREDDITS = {
+            "AnimeGirls", "Animemes", "anime", "CuteAnimeGirls", "awwnimate",
+            "Cuteanimenekos", "headpats",  "pouts", "AnimeBlush", "MoeBlushing"
+    };
+    private final RedditTokenManager redditTokenManager;
 
     // Mapping of categories to subreddits
     private final Map<String, List<String>> categoryToSubreddits;
@@ -37,77 +42,16 @@ public class AnimeCommand extends Command {
 
         // Initialize category to subreddit mapping
         categoryToSubreddits = new HashMap<>();
-        categoryToSubreddits.put("anime", List.of("AnimeGirls", "Animemes", "anime", "CuteAnimeGirls", "awwnimate", "Cuteanimenekos", "headpats",  "pouts", "AnimeBlush", "MoeBlushing"));
-
+        categoryToSubreddits.put("anime", List.of(SUBREDDITS));
 
         // Get Reddit API Token
-        this.redditOAuth = new RedditOAuth(bot.httpClient, bot.gson);
-        String token = getRedditToken(clientID, secretID, username, password);
+        RedditOAuth redditOAuth = new RedditOAuth(bot.httpClient, bot.gson);
 
         this.name = "anime";
         this.description = "Get a random anime image! :3";
         this.category = Category.FUN;
 
-        // Initialize the RedditClient with your access token
-        if (token != null) {
-            System.out.println("Initializing RedditClient...");
-            this.redditClient = new RedditClient(bot.httpClient, token);
-            System.out.println("RedditClient initialized with token");
-        } else {
-            System.out.println("Token was null, RedditClient not initialized");
-        }
-    }
-
-    private String refreshRedditToken(String clientId, String clientSecret, String username, String password) {
-        System.out.println("Checking Reddit Token Status...");
-        Document tokenDocument = bot.database.getRedditToken();
-        if (tokenDocument != null) {
-            System.out.println("Checking to see if Token is Expired...");
-            Instant expiration = tokenDocument.getDate("expiration").toInstant();
-            if (Instant.now().isBefore(expiration)) {
-                System.out.println("Token Not Expired!!");
-                return tokenDocument.getString("token");
-            }
-        }
-
-        try {
-            System.out.println("Setting new Reddit Token...");
-            String token = redditOAuth.authenticate(clientId, clientSecret, username, password);
-            Instant expiration = Instant.now().plusSeconds(24 * 60 * 60); // 24 hours
-            bot.database.clearRedditToken();
-            bot.database.storeRedditToken(token, expiration);
-            return token;
-        } catch (IOException e) {
-            System.out.println("Failed to authenticate with Reddit API");
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    private String getRedditToken(String clientId, String clientSecret, String username, String password) {
-        Document tokenDocument = bot.database.getRedditToken();
-        if (tokenDocument != null) {
-            Instant expiration = tokenDocument.getDate("expiration").toInstant();
-            if (Instant.now().isBefore(expiration)) {
-                return tokenDocument.getString("token");
-            }
-        }
-
-        try {
-            System.out.println("Authenticating with Reddit...");
-            String token = redditOAuth.authenticate(clientId, clientSecret, username, password);
-            System.out.println("Reddit API Token: " + token);
-            Instant expiration = Instant.now().plusSeconds(24 * 60 * 60); // 24 hours
-            bot.database.clearRedditToken();
-            bot.database.storeRedditToken(token, expiration);
-            return token;
-        } catch (IOException e) {
-            System.out.println("Failed to authenticate with Reddit API");
-            e.printStackTrace();
-        }
-
-        return null;
+        this.redditTokenManager = new RedditTokenManager(bot.getDatabase(), redditOAuth, clientID, secretID, username, password);
     }
 
     private String getRandomSubreddit(String category) {
@@ -131,6 +75,16 @@ public class AnimeCommand extends Command {
         // Set Attempt Variable
         int attempt = 0;
 
+        String token = redditTokenManager.getValidToken();
+        // Initialize the RedditClient with your access token
+        if (token!= null) {
+            System.out.println("Initializing RedditClient...");
+            this.redditClient = new RedditClient(bot.httpClient, redditTokenManager);
+            System.out.println("RedditClient initialized with token");
+        } else {
+            System.out.println("Token was null, RedditClient not initialized");
+        }
+
         //Call Image Fetching Function
         fetchAndSendMedia(event, category, includeVideos, attempt);
     }
@@ -144,7 +98,7 @@ public class AnimeCommand extends Command {
         String password = config.get("REDDIT_PASSWORD");
 
         // Check to make sure Reddit Token isn't expired before running command.
-        String token = refreshRedditToken(clientID, secretID, username, password);
+        String token = redditTokenManager.getValidToken();
 
         if (token == null) {
             event.getHook().sendMessage("RedditToken Refresh failed, contact Bot Administrator for support.").setEphemeral(true).queue();
@@ -164,20 +118,28 @@ public class AnimeCommand extends Command {
         // Try fetching a valid media URL with a maximum of 10 attempts
         while (!validMedia) {
             try {
+                // Fetch media from Reddit
                 mediaUrl = redditClient.getRandomImage(subreddit);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            System.out.println("Media URL: " + mediaUrl);
-            try {
+
+                // Check for Forbidden (403) response
+                if (mediaUrl == null || mediaUrl.contains("\"error\":403")) {
+                    System.out.println("403 Forbidden encountered. Retrying with another subreddit...");
+                    subreddit = getRandomSubreddit(category); // Pick another subreddit
+                    continue;
+                }
+
+                System.out.println("Media URL: " + mediaUrl);
                 validMedia = redditClient.isValidUrl(mediaUrl);
+
+                // Handle invalid media
+                if (!includeVideos && (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com") || mediaUrl.contains("youtu.be") || mediaUrl.contains("youtube"))) {
+                    validMedia = false; // Skip videos if not desired
+                } else if (mediaUrl.contains("/comments") || mediaUrl.contains("imgur.com") || mediaUrl.contains("patreon.com")) {
+                    validMedia = false;
+                }
             } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            if (!includeVideos && (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com") || mediaUrl.contains("youtu.be") || mediaUrl.contains("youtube"))) {
-                validMedia = false; // Skip videos if not desired
-            } else if (mediaUrl.contains("/comments") || mediaUrl.contains("imgur.com") || mediaUrl.contains("patreon.com")) {
-                validMedia = false;
+                System.out.println("Error fetching media. Retrying...");
+                e.printStackTrace();
             }
         }
 
@@ -186,15 +148,15 @@ public class AnimeCommand extends Command {
         }
 
         // Handling different media types
-        if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("x.com")) {
+        if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("x.com") || mediaUrl.contains("https://v.redd.it/")) {
             if (includeVideos) {
-                String message = String.format("**Here's a random video from r/%s:**\n||%s||", subreddit, mediaUrl);
+                String message = String.format("**Here's a random video from r/%s:**\n%s", subreddit, mediaUrl);
                 event.getHook().sendMessage(message).queue();
             } else {
                 System.out.println("Video found, but videos are not allowed.");
                 fetchAndSendMedia(event, category, includeVideos, attempt + 1);
             }
-        } else if (mediaUrl.endsWith(".gif") || mediaUrl.contains("v.redd.it")) {
+        } else if (mediaUrl.endsWith(".gif")) {
             EmbedBuilder embed = new EmbedBuilder()
                     .setColor(EmbedColor.DEFAULT.color)
                     .setTitle("Here's a random gif from r/" + subreddit)

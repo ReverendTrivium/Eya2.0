@@ -72,7 +72,7 @@ public class LoopNSFWCommand extends Command {
             public void run() {
                 nsfwCommand.executeCategory(event.getChannel().getId(), category, event);
             }
-        }, 60000, 60000); // 600000ms = 10 minutes
+        }, 6000, 6000); // 600000ms = 10 minutes
 
         event.getHook().sendMessage("Looping NSFW posts from category: " + category).queue();
     }

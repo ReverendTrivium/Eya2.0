@@ -2,20 +2,20 @@ package org.eyazahrid.Commands.Fun;
 
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import org.bson.Document;
 import org.eyazahrid.Eyazahrid;
 import org.eyazahrid.Commands.Command;
 import org.eyazahrid.Commands.Category;
+import org.eyazahrid.util.SocialMedia.Reddit.RedditTokenManager;
 import org.eyazahrid.util.embeds.EmbedColor;
 import org.eyazahrid.util.SocialMedia.Reddit.RedditClient;
 import org.eyazahrid.util.SocialMedia.Reddit.RedditOAuth;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
 
 public class NSFWCommand extends Command {
@@ -23,6 +23,7 @@ public class NSFWCommand extends Command {
     private final RedditOAuth redditOAuth;
     private final Eyazahrid bot;
     private static final int MAX_ATTEMPTS = 10;
+    private final RedditTokenManager redditTokenManager;
 
     // Mapping of categories to subreddits
     private final Map<String, List<String>> categoryToSubreddits;
@@ -32,7 +33,6 @@ public class NSFWCommand extends Command {
         this.bot = bot;
         System.out.println("Initializing NSFWCommand...");
         Dotenv config = bot.getConfig();
-
         String clientID = config.get("REDDIT_CLIENT_ID");
         String secretID = config.get("REDDIT_SECRET_ID");
         String username = config.get("REDDIT_USERNAME");
@@ -62,11 +62,12 @@ public class NSFWCommand extends Command {
 
         // Get Reddit API Token
         this.redditOAuth = new RedditOAuth(bot.httpClient, bot.gson);
-        String token = getRedditToken(clientID, secretID, username, password);
+        this.redditTokenManager = new RedditTokenManager(bot.getDatabase(), redditOAuth, clientID, secretID, username, password);
 
         this.name = "nsfw";
         this.description = "Get an nsfw image [18+ only].";
         this.category = Category.FUN;
+        this.permission = Permission.MANAGE_CHANNEL;
         this.args.add(new OptionData(OptionType.STRING, "category", "The type of nsfw image to generate")
                 .addChoice("porn", "porn")
                 .addChoice("boobs", "boobs")
@@ -89,67 +90,6 @@ public class NSFWCommand extends Command {
                 .addChoice("native", "native"));
 
         this.args.add(new OptionData(OptionType.BOOLEAN, "video", "Whether to include videos in the results").setRequired(false));
-
-        // Initialize the RedditClient with your access token
-        if (token != null) {
-            System.out.println("Initializing RedditClient...");
-            this.redditClient = new RedditClient(bot.httpClient, token);
-            System.out.println("RedditClient initialized with token");
-        } else {
-            System.out.println("Token was null, RedditClient not initialized");
-        }
-    }
-
-    private String refreshRedditToken(String clientId, String clientSecret, String username, String password) {
-        System.out.println("Checking Reddit Token Status...");
-        Document tokenDocument = bot.database.getRedditToken();
-        if (tokenDocument != null) {
-            System.out.println("Checking to see if Token is Expired...");
-            Instant expiration = tokenDocument.getDate("expiration").toInstant();
-            if (Instant.now().isBefore(expiration)) {
-                System.out.println("Token Not Expired!!");
-                return tokenDocument.getString("token");
-            }
-        }
-
-        try {
-            System.out.println("Setting new Reddit Token...");
-            String token = redditOAuth.authenticate(clientId, clientSecret, username, password);
-            Instant expiration = Instant.now().plusSeconds(24 * 60 * 60); // 24 hours
-            bot.database.clearRedditToken();
-            bot.database.storeRedditToken(token, expiration);
-            return token;
-        } catch (IOException e) {
-            System.out.println("Failed to authenticate with Reddit API");
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    private String getRedditToken(String clientId, String clientSecret, String username, String password) {
-        Document tokenDocument = bot.database.getRedditToken();
-        if (tokenDocument != null) {
-            Instant expiration = tokenDocument.getDate("expiration").toInstant();
-            if (Instant.now().isBefore(expiration)) {
-                return tokenDocument.getString("token");
-            }
-        }
-
-        try {
-            System.out.println("Authenticating with Reddit...");
-            String token = redditOAuth.authenticate(clientId, clientSecret, username, password);
-            System.out.println("Reddit API Token: " + token);
-            Instant expiration = Instant.now().plusSeconds(24 * 60 * 60); // 24 hours
-            bot.database.clearRedditToken();
-            bot.database.storeRedditToken(token, expiration);
-            return token;
-        } catch (IOException e) {
-            System.out.println("Failed to authenticate with Reddit API");
-            e.printStackTrace();
-        }
-
-        return null;
     }
 
     private String getRandomSubreddit(String category) {
@@ -170,15 +110,23 @@ public class NSFWCommand extends Command {
         String username = config.get("REDDIT_USERNAME");
         String password = config.get("REDDIT_PASSWORD");
 
+        String token = redditTokenManager.getValidToken();
+
+        // Initialize the RedditClient with your access token
+        if (token != null) {
+            System.out.println("Initializing RedditClient...");
+            this.redditClient = new RedditClient(bot.httpClient, redditTokenManager);
+            System.out.println("RedditClient initialized with token");
+        } else {
+            System.out.println("Token was null, RedditClient not initialized");
+        }
+
         OptionMapping categoryOption = event.getOption("category");
         String category = (categoryOption != null) ? categoryOption.getAsString() : "nsfw"; // Default category if none provided
 
         boolean includeVideos = event.getOption("video") != null && Objects.requireNonNull(event.getOption("video")).getAsBoolean();
 
         event.deferReply().queue();
-
-        // Set Attempt Count for fetching NSFW Image
-        int attempt = 0;
 
         // Check to ensure this is an NSFW Channel
         if (!event.getChannel().asTextChannel().isNSFW()) {
@@ -187,8 +135,8 @@ public class NSFWCommand extends Command {
             return;
         }
 
-        // Check to make sure Reddit Token isn't expired before running command.
-        String token = refreshRedditToken(clientID, secretID, username, password);
+        // Set Attempt Count for fetching NSFW Image
+        int attempt = 0;
 
         if (token != null) {
             fetchAndSendMedia(event, category, includeVideos, attempt);
@@ -247,9 +195,7 @@ public class NSFWCommand extends Command {
                 event.getHook().sendMessage(message).queue();
             } else {
                 System.out.println("Video found, but videos are not allowed.");
-
-                // Fetch new Image
-                fetchAndSendMedia(event, category, false, attempt);
+                fetchAndSendMedia(event, category, includeVideos, attempt);
             }
         } else if (mediaUrl.endsWith(".gif")) {
             EmbedBuilder embed = new EmbedBuilder()
@@ -282,7 +228,6 @@ public class NSFWCommand extends Command {
         }
     }
 
-    // For Looping NSFW Image
     private void fetchAndSendMediaLoop(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
         // Get Reddit Token Variables and Initialize Config
         Dotenv config = bot.getConfig();
@@ -292,7 +237,7 @@ public class NSFWCommand extends Command {
         String password = config.get("REDDIT_PASSWORD");
 
         // Check to make sure Reddit Token isn't expired before running command.
-        String token = refreshRedditToken(clientID, secretID, username, password);
+        String token = redditTokenManager.getValidToken();
 
         if (token == null) {
             Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage("RedditToken Refresh failed, contact Bot Administrator for support.").queue();
@@ -301,9 +246,6 @@ public class NSFWCommand extends Command {
 
         if (attempt >= MAX_ATTEMPTS) {
             event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
-            System.out.println("Stopping Loop NSFW Command");
-
-            // Stop NSFW Loop
             LoopNSFWCommand.stopLoop();
             return;
         }
@@ -312,7 +254,6 @@ public class NSFWCommand extends Command {
 
         String mediaUrl = null;
         boolean validMedia = false;
-
 
         while (!validMedia && attempt < 10) {
             attempt++;
