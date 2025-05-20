@@ -3,6 +3,7 @@ package org.eyazahrid.Commands.Fun;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -20,7 +21,6 @@ import java.util.*;
 
 public class NSFWCommand extends Command {
     private RedditClient redditClient;
-    private final RedditOAuth redditOAuth;
     private final Eyazahrid bot;
     private static final int MAX_ATTEMPTS = 10;
     private final RedditTokenManager redditTokenManager;
@@ -57,7 +57,7 @@ public class NSFWCommand extends Command {
         categoryToSubreddits.put("white", List.of("WhiteGirls", "thickwhitegirls", "CurvyWhiteGirls", "PhatAssWhiteGirl"));
 
         // Get Reddit API Token
-        this.redditOAuth = new RedditOAuth(bot.httpClient, bot.gson);
+        RedditOAuth redditOAuth = new RedditOAuth(bot.httpClient, bot.gson);
         this.redditTokenManager = new RedditTokenManager(bot.getDatabase(), redditOAuth, clientID, secretID, username, password);
 
         this.name = "nsfw";
@@ -96,12 +96,6 @@ public class NSFWCommand extends Command {
     @Override
     public void execute(SlashCommandInteractionEvent event) {
         // Get Reddit Token Variables and Initialize Config
-        Dotenv config = bot.getConfig();
-        String clientID = config.get("REDDIT_CLIENT_ID");
-        String secretID = config.get("REDDIT_SECRET_ID");
-        String username = config.get("REDDIT_USERNAME");
-        String password = config.get("REDDIT_PASSWORD");
-
         String token = redditTokenManager.getValidToken();
 
         // Initialize the RedditClient with your access token
@@ -135,12 +129,12 @@ public class NSFWCommand extends Command {
         }
     }
 
-    public void executeCategory(String channelId, String category, SlashCommandInteractionEvent event) {
+    public void executeCategory(TextChannel channelId, String category) {
         // Set Int Attempts before it stops trying to find Images for LoopNSFW command
         int attempt = 0;
 
         // Call Loop Command
-        fetchAndSendMediaLoop(channelId, category, attempt, event);
+        fetchAndSendMediaLoop(channelId, category, attempt);
     }
 
     // Fetch Single NSFW Image
@@ -190,7 +184,7 @@ public class NSFWCommand extends Command {
                 event.getHook().sendMessage(message).queue();
             } else {
                 System.out.println("Video found, but videos are not allowed.");
-                fetchAndSendMedia(event, category, includeVideos, attempt);
+                fetchAndSendMedia(event, category, false, attempt);
             }
         } else if (mediaUrl.endsWith(".gif")) {
             EmbedBuilder embed = new EmbedBuilder()
@@ -223,27 +217,20 @@ public class NSFWCommand extends Command {
         }
     }
 
-    private void fetchAndSendMediaLoop(String channelId, String category, int attempt, SlashCommandInteractionEvent event) {
+    private void fetchAndSendMediaLoop(TextChannel channel, String category, int attempt) {
         // Ensure RedditClient is initialized
         ensureRedditClientInitialized();
-
-        // Get Reddit Token Variables and Initialize Config
-        Dotenv config = bot.getConfig();
-        String clientID = config.get("REDDIT_CLIENT_ID");
-        String secretID = config.get("REDDIT_SECRET_ID");
-        String username = config.get("REDDIT_USERNAME");
-        String password = config.get("REDDIT_PASSWORD");
 
         // Check to make sure Reddit Token isn't expired before running command.
         String token = redditTokenManager.getValidToken();
 
         if (token == null) {
-            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage("RedditToken Refresh failed, contact Bot Administrator for support.").queue();
+            channel.sendMessage("RedditToken Refresh failed, contact Bot Administrator for support.").queue();
             return;
         }
 
         if (attempt >= MAX_ATTEMPTS) {
-            event.getHook().sendMessage("Failed finding Images after multiple attempts, please try again later.").setEphemeral(true).queue();
+            channel.sendMessage("Failed finding Images after multiple attempts, please try again later.").queue();
             LoopNSFWCommand.stopLoop();
             return;
         }
@@ -262,7 +249,6 @@ public class NSFWCommand extends Command {
             }
             System.out.println("Media URL: " + mediaUrl);
 
-            //Make sure there are no Comment or Patreon mediaURLs
             try {
                 validMedia = redditClient.isValidUrl(mediaUrl);
             } catch (IOException e) {
@@ -279,17 +265,17 @@ public class NSFWCommand extends Command {
 
         if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub")) {
             String message = String.format("**Here's a random NSFW video from r/%s:**\n%s", subreddit, mediaUrl);
-            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessage(message).queue();
+            channel.sendMessage(message).queue();
         } else if (mediaUrl.endsWith(".gif")) {
             EmbedBuilder embed = new EmbedBuilder()
                     .setColor(EmbedColor.DEFAULT.color)
                     .setTitle("Here's a random NSFW gif from r/" + subreddit)
                     .setImage(mediaUrl);
-            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessageEmbeds(embed.build()).queue();
+            channel.sendMessageEmbeds(embed.build()).queue();
         } else if (mediaUrl.contains("reddit.com/gallery")) {
             List<String> galleryUrls = redditClient.getGalleryImages(mediaUrl);
             if (galleryUrls.isEmpty()) {
-                fetchAndSendMediaLoop(channelId, category, attempt + 1, event); // Retry with a new media URL
+                fetchAndSendMediaLoop(channel, category, attempt + 1); // Retry with a new media URL
                 return;
             }
             EmbedBuilder embed = new EmbedBuilder()
@@ -298,7 +284,7 @@ public class NSFWCommand extends Command {
                     .setImage(galleryUrls.get(0))
                     .setFooter("Page 1/" + galleryUrls.size());
 
-            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessageEmbeds(embed.build()).queue(message -> {
+            channel.sendMessageEmbeds(embed.build()).queue(message -> {
                 bot.getGalleryManager().addGallery(message.getIdLong(), galleryUrls);
                 bot.getGalleryManager().addButtons(message, galleryUrls.size());
             });
@@ -307,7 +293,7 @@ public class NSFWCommand extends Command {
                     .setColor(EmbedColor.DEFAULT.color)
                     .setTitle("Here's a random NSFW image from r/" + subreddit)
                     .setImage(mediaUrl);
-            Objects.requireNonNull(bot.getShardManager().getTextChannelById(channelId)).sendMessageEmbeds(embed.build()).queue();
+            channel.sendMessageEmbeds(embed.build()).queue();
         }
     }
 
