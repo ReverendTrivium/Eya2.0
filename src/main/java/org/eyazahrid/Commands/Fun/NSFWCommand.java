@@ -169,10 +169,11 @@ public class NSFWCommand extends Command {
             System.out.println("Media URL: " + mediaUrl);
             try {
                 // Only Check Valid URLS for non-gallery media
-                if (!mediaUrl.contains("gallery")) {
+                if (mediaUrl.contains("gallery")) {
+                    validMedia = true; // Skip validation for gallery URLs
+                } else {
                     validMedia = redditClient.isValidUrl(mediaUrl);
                 }
-
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -261,9 +262,13 @@ public class NSFWCommand extends Command {
                 throw new RuntimeException(e);
             }
             System.out.println("Media URL: " + mediaUrl);
-
             try {
-                validMedia = redditClient.isValidUrl(mediaUrl);
+                // Only Check Valid URLS for non-gallery media
+                if (mediaUrl.contains("gallery")) {
+                    validMedia = true; // Skip validation for gallery URLs
+                } else {
+                    validMedia = redditClient.isValidUrl(mediaUrl);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
