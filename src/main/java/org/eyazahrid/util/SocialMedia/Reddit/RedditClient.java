@@ -5,7 +5,8 @@ import com.google.gson.stream.JsonReader;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import org.jsoup.Jsoup;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -193,20 +194,53 @@ public class RedditClient {
     }
 
     public List<String> getGalleryImages(String galleryUrl) {
-        System.out.println("Fetching gallery images from: " + galleryUrl);
         List<String> imageUrls = new ArrayList<>();
         try {
-            org.jsoup.nodes.Document doc = Jsoup.connect(galleryUrl).get();
-            doc.select("a[href]").forEach(element -> {
-                String url = element.attr("href");
-                if (url.contains("preview.redd.it") && url.contains("format=pjpg&auto=webp")) {
-                    url = url.replace("&amp;", "&");
-                    imageUrls.add(url);
+            String postId = galleryUrl.replaceAll(".*/(\\w+)$", "$1"); // Extract post ID
+            String apiUrl = "https://www.reddit.com/comments/" + postId + ".json";
+
+            Request request = new Request.Builder()
+                    .url(apiUrl)
+                    .header("User-Agent", "EyaBot/1.0")
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    System.out.println("Request failed: " + response.code());
+                    return imageUrls;
                 }
-            });
-        } catch (IOException e) {
+
+                assert response.body() != null;
+                String body = response.body().string();
+                JSONArray root = new JSONArray(body);
+                JSONObject postData = root.getJSONObject(0)
+                        .getJSONObject("data")
+                        .getJSONArray("children")
+                        .getJSONObject(0)
+                        .getJSONObject("data");
+
+                if (!postData.has("gallery_data") || !postData.has("media_metadata")) {
+                    System.out.println("Not a gallery post.");
+                    return imageUrls;
+                }
+
+                JSONArray items = postData.getJSONObject("gallery_data").getJSONArray("items");
+                JSONObject metadata = postData.getJSONObject("media_metadata");
+
+                for (int i = 0; i < items.length(); i++) {
+                    String mediaId = items.getJSONObject(i).getString("media_id");
+                    String imageUrl = metadata.getJSONObject(mediaId)
+                            .getJSONObject("s")
+                            .getString("u")
+                            .replaceAll("&amp;", "&");
+                    imageUrls.add(imageUrl);
+                }
+
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return imageUrls;
     }
+
 }
