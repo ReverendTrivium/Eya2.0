@@ -183,11 +183,12 @@ public class RedditClient {
         System.out.println("Checking if URL is valid: " + url);
         Request request = new Request.Builder()
                 .url(url)
-                .head()
+                .get()
+                .header("User-Agent", "Mozilla/5.0 (compatible; EyaBot/1.0)")
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
-            return response.isSuccessful() && response.body() != null;
+            return response.isSuccessful();
         }
     }
 
