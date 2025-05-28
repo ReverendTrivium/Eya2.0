@@ -7,6 +7,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.eyazahrid.util.SocialMedia.Reddit.RedditTokenManager;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -196,12 +197,16 @@ public class RedditClient {
     public List<String> getGalleryImages(String galleryUrl) {
         List<String> imageUrls = new ArrayList<>();
         try {
+            String accessToken = tokenProvider.getValidToken();
             String postId = galleryUrl.replaceAll(".*/(\\w+)$", "$1"); // Extract post ID
-            String apiUrl = "https://www.reddit.com/comments/" + postId + ".json";
+            String apiUrl = "https://oauth.reddit.com/comments/" + postId + ".json";
+
+            System.out.println("Fetching gallery images from: " + apiUrl);
 
             Request request = new Request.Builder()
                     .url(apiUrl)
-                    .header("User-Agent", "EyaBot/1.0")
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("User-Agent", "EyaBot/1.0 by /u/JonTronsCareer") // Make it Reddit-compliant
                     .build();
 
             try (Response response = httpClient.newCall(request).execute()) {
