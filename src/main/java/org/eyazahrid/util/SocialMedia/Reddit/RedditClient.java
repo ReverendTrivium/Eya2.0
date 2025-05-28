@@ -183,10 +183,11 @@ public class RedditClient {
 
     public boolean isValidUrl(String url) throws IOException {
         System.out.println("Checking if URL is valid: " + url);
+        String accessToken = tokenProvider.getValidToken();
         Request request = new Request.Builder()
                 .url(url)
-                .get()
-                .header("User-Agent", "Mozilla/5.0 (compatible; EyaBot/1.0)")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("User-Agent", "EyaBot/1.0 by /u/JonTronsCareer") // Make it Reddit-compliant
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
