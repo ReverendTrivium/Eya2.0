@@ -188,7 +188,7 @@ public class NSFWCommand extends Command {
             mediaUrl = mediaUrl.replace("ifr", "watch");
         }
 
-        if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub") || mediaUrl.contains("/video")) {
+        if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub") || mediaUrl.contains("video")) {
             if (includeVideos) {
                 String message = String.format("**Here's a random NSFW video from r/%s:**\n%s", subreddit, mediaUrl);
                 event.getHook().sendMessage(message).queue();
@@ -281,7 +281,7 @@ public class NSFWCommand extends Command {
             mediaUrl = mediaUrl.replace("ifr", "watch");
         }
 
-        if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub")) {
+        if (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com/watch") || mediaUrl.contains("www.youtube.com/") || mediaUrl.contains("youtu.be") || mediaUrl.contains("xhamster") || mediaUrl.contains("redtube") || mediaUrl.contains("pornhub") || mediaUrl.contains("video")) {
             String message = String.format("**Here's a random NSFW video from r/%s:**\n%s", subreddit, mediaUrl);
             channel.sendMessage(message).queue();
         } else if (mediaUrl.endsWith(".gif")) {
