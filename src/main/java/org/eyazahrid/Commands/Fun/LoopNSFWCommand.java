@@ -21,7 +21,7 @@ public class LoopNSFWCommand extends Command {
     public LoopNSFWCommand(Eyazahrid bot) {
         super(bot);
         this.name = "loopnsfw";
-        this.description = "Loop NSFW posts from a specific category every 10 seconds.";
+        this.description = "Loop NSFW posts from a specific category every minute.";
         this.args.add(new OptionData(OptionType.STRING, "category", "The type of nsfw image to generate")
                 .addChoice("porn", "porn")
                 .addChoice("boobs", "boobs")
@@ -77,7 +77,7 @@ public class LoopNSFWCommand extends Command {
                     nsfwCommand.executeCategory(repeatChannel, category);
                 }
             }
-        }, 6000, 10000); // Delay 6 seconds, repeat every 10 minutes
+        }, 6000, 60000); // Delay 6 seconds, repeat every 10 minutes
 
         event.getHook().sendMessage("Looping NSFW posts from category: " + category).queue();
     }
