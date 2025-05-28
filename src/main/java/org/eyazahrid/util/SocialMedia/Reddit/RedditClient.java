@@ -180,6 +180,7 @@ public class RedditClient {
     }
 
     public boolean isValidUrl(String url) throws IOException {
+        System.out.println("Checking if URL is valid: " + url);
         Request request = new Request.Builder()
                 .url(url)
                 .head()
