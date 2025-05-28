@@ -168,7 +168,11 @@ public class NSFWCommand extends Command {
             }
             System.out.println("Media URL: " + mediaUrl);
             try {
-                validMedia = redditClient.isValidUrl(mediaUrl);
+                // Only Check Valid URLS for non-gallery media
+                if (!mediaUrl.contains("gallery")) {
+                    validMedia = redditClient.isValidUrl(mediaUrl);
+                }
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
