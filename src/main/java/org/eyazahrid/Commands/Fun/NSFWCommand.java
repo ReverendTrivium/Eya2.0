@@ -158,6 +158,11 @@ public class NSFWCommand extends Command {
             attempt++;
             try {
                 mediaUrl = redditClient.getRandomImageNSFW(subreddit);
+                if (mediaUrl == null) {
+                    String message = "No media could be fetched. Try again later.";
+                    event.getHook().sendMessage(message).queue();
+                    return;
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -244,6 +249,10 @@ public class NSFWCommand extends Command {
             attempt++;
             try {
                 mediaUrl = redditClient.getRandomImageNSFW(subreddit);
+                if (mediaUrl == null) {
+                    channel.sendMessage("No media could be fetched. Try again later.").queue();
+                    return;
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
