@@ -14,16 +14,14 @@ import java.util.*;
 public class RedditClient {
     private final OkHttpClient httpClient;
     private final RedditTokenManager tokenProvider;
-    private final Random random;
 
     public RedditClient(OkHttpClient httpClient, RedditTokenManager tokenProvider) {
         this.httpClient = httpClient;
         this.tokenProvider = tokenProvider;
-        this.random = new Random();
     }
 
     public String getRandomImageNSFW(String subreddit) throws IOException {
-        return getRandomImageWithFallback(subreddit, "porn");
+        return getRandomImageWithFallbackNSFW(subreddit, "porn");
     }
 
     private String getRandomImageWithFallbackNSFW(String subreddit, String fallbackSubreddit) throws IOException {
@@ -193,6 +191,7 @@ public class RedditClient {
     }
 
     public List<String> getGalleryImages(String galleryUrl) {
+        System.out.println("Fetching gallery images from: " + galleryUrl);
         List<String> imageUrls = new ArrayList<>();
         try {
             org.jsoup.nodes.Document doc = Jsoup.connect(galleryUrl).get();

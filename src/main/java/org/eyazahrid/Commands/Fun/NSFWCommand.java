@@ -263,7 +263,7 @@ public class NSFWCommand extends Command {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            if (mediaUrl.contains("/comments") || mediaUrl.contains("imgur.com") || mediaUrl.contains("patreon.com")) {
+            if (mediaUrl.contains("imgur.com") || mediaUrl.contains("patreon.com")) {
                 validMedia = false;
             }
         }
