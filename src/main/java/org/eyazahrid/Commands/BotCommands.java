@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.*;
 import org.eyazahrid.Commands.Fun.*;
+import org.eyazahrid.Commands.Greetings.GreetingsCommand;
 import org.eyazahrid.Commands.Utility.*;
 import org.eyazahrid.Commands.Moderation.*;
 import org.eyazahrid.Commands.Utility.HelpSubCommands.*;
@@ -58,9 +59,8 @@ public class BotCommands extends ListenerAdapter {
                 new InspireCommand(bot),
                 new GoogleCommand(bot, googleSearchService),
 
-                //Leveling commands
-
-                //Suggestions commands
+                //Greeting commands
+                new GreetingsCommand(bot),
 
                 //Staff commands
                 new roles(bot),

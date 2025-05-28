@@ -15,11 +15,6 @@ import org.eyazahrid.Eyazahrid;
  *
  * @author Derrick Eberlein
  */
-/**
- * Handles server messages (greeting, farewell, joinDM, etc).
- *
- * @author Derrick Eberlein
- */
 @Getter
 public class GreetingHandler {
 

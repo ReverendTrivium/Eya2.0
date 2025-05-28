@@ -49,10 +49,18 @@ public class ButtonListener extends ListenerAdapter {
      */
     public static void sendPaginatedMenu(String userID, ReplyCallbackAction action, List<MessageEmbed> embeds) {
         String uuid = userID + ":" + UUID.randomUUID();
-        List<Button> components = getPaginationButtons(uuid, embeds.size());
+
+        // If there's only one page, disable both buttons
+        List<Button> components = getPaginationButtons(uuid, 0, embeds.size());
         buttons.put(uuid, components);
         menus.put(uuid, embeds);
-        action.addActionRow(components).queue(interactionHook -> ButtonListener.disableButtons(uuid, interactionHook));
+
+        action.addActionRow(components).queue(interactionHook -> {
+            if (embeds.size() > 1) {
+                // Schedule button disabling only if there is more than one page
+                ButtonListener.disableButtons(uuid, interactionHook);
+            }
+        });
     }
 
     /**
@@ -62,19 +70,28 @@ public class ButtonListener extends ListenerAdapter {
      * @param maxPages the total number of embed pages.
      * @return A list of components to use on a paginated embed.
      */
-    private static List<Button> getPaginationButtons(String uuid, int maxPages) {
-        return Arrays.asList(
-                Button.primary("pagination:prev:" + uuid, "Previous").asDisabled(),
-                Button.of(ButtonStyle.SECONDARY, "pagination:page:0", "1/" + maxPages).asDisabled(),
-                Button.primary("pagination:next:" + uuid, "Next")
-        );
+    private static List<Button> getPaginationButtons(String uuid, int currentPage, int maxPages) {
+        // Disable "Previous" button if on the first page, otherwise enable it
+        Button previousButton = (currentPage == 0) ?
+                Button.primary("pagination:prev:" + uuid, "Previous").asDisabled() :
+                Button.primary("pagination:prev:" + uuid, "Previous").asEnabled();
+
+        // Disable "Next" button if on the last page, otherwise enable it
+        Button nextButton = (currentPage == maxPages - 1) ?
+                Button.primary("pagination:next:" + uuid, "Next").asDisabled() :
+                Button.primary("pagination:next:" + uuid, "Next").asEnabled();
+
+        // The page label button is always disabled
+        Button pageLabelButton = Button.of(ButtonStyle.SECONDARY, "pagination:page:" + currentPage, (currentPage + 1) + "/" + maxPages).asDisabled();
+
+        return Arrays.asList(previousButton, pageLabelButton, nextButton);
     }
 
     /**
      * Schedules a timer task to disable buttons and clear cache after a set time.
      *
      * @param uuid the uuid of the components to disable.
-     * @param hook a interaction hook pointing to original message.
+     * @param hook an interaction hook pointing to original message.
      */
     public static void disableButtons(String uuid, InteractionHook hook) {
         Runnable task = () -> {
@@ -124,45 +141,51 @@ public class ButtonListener extends ListenerAdapter {
         }
     }
 
-    // Handle pagination
+    /**
+     * Handles the Pagination of Embedded Messages.
+     *
+     * @param uuid the uuid of the components to disable.
+     * @param event an interaction event pointing to the original event.
+     */
     private void handlePagination(ButtonInteractionEvent event, String[] pressedArgs, String uuid) {
         List<Button> components = buttons.get(uuid);
         if (components == null) return;
 
+        List<MessageEmbed> embeds = menus.get(uuid);
+        if (embeds == null) return;
+
+        int currentPage = Integer.parseInt(Objects.requireNonNull(components.get(1).getId()).split(":")[2]);
+
         if (pressedArgs[1].equals("next")) {
-            int page = Integer.parseInt(Objects.requireNonNull(components.get(1).getId()).split(":")[2]) + 1;
-            List<MessageEmbed> embeds = menus.get(uuid);
-            if (page < embeds.size()) {
-                components.set(1, components.get(1).withId("pagination:page:" + page).withLabel((page + 1) + "/" + embeds.size()));
-                components.set(0, components.get(0).asEnabled());
-                if (page == embeds.size() - 1) {
-                    components.set(2, components.get(2).asDisabled());
-                }
+            int nextPage = currentPage + 1;
+            if (nextPage < embeds.size()) {
+                // Generate new buttons with updated page number
+                components = getPaginationButtons(uuid, nextPage, embeds.size());
                 buttons.put(uuid, components);
-                event.editComponents(ActionRow.of(components)).setEmbeds(embeds.get(page)).queue();
+                event.editComponents(ActionRow.of(components)).setEmbeds(embeds.get(nextPage)).queue();
             }
         } else if (pressedArgs[1].equals("prev")) {
-            int page = Integer.parseInt(Objects.requireNonNull(components.get(1).getId()).split(":")[2]) - 1;
-            List<MessageEmbed> embeds = menus.get(uuid);
-            if (page >= 0) {
-                components.set(1, components.get(1).withId("pagination:page:" + page).withLabel((page + 1) + "/" + embeds.size()));
-                components.set(2, components.get(2).asEnabled());
-                if (page == 0) {
-                    components.set(0, components.get(0).asDisabled());
-                }
+            int prevPage = currentPage - 1;
+            if (prevPage >= 0) {
+                // Generate new buttons with updated page number
+                components = getPaginationButtons(uuid, prevPage, embeds.size());
                 buttons.put(uuid, components);
-                event.editComponents(ActionRow.of(components)).setEmbeds(embeds.get(page)).queue();
+                event.editComponents(ActionRow.of(components)).setEmbeds(embeds.get(prevPage)).queue();
             }
         }
     }
 
-    // Handle system reset buttons
+    /**
+     * Handles Resetting Buttons for event.
+     *
+     * @param event the event to reset buttons for.
+     * @param pressedArgs the arguments being reset.
+     */
     private void handleReset(ButtonInteractionEvent event, String[] pressedArgs) {
         String systemName = pressedArgs[4];
         if (pressedArgs[1].equals("yes")) {
             event.deferEdit().queue();
             GuildData data = GuildData.get(Objects.requireNonNull(event.getGuild()), bot);
-
             if (systemName.equalsIgnoreCase("Greeting")) data.getGreetingHandler().reset();
             MessageEmbed embed = EmbedUtils.createSuccess(systemName + " system was successfully reset!");
             event.getHook().editOriginalComponents(new ArrayList<>()).setEmbeds(embed).queue();
