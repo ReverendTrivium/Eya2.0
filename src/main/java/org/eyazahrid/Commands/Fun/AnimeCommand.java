@@ -3,7 +3,6 @@ package org.eyazahrid.Commands.Fun;
 import io.github.cdimascio.dotenv.Dotenv;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import org.bson.Document;
 import org.eyazahrid.Commands.Category;
 import org.eyazahrid.Commands.Command;
 import org.eyazahrid.Eyazahrid;
@@ -13,7 +12,6 @@ import org.eyazahrid.util.SocialMedia.Reddit.RedditTokenManager;
 import org.eyazahrid.util.embeds.EmbedColor;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.*;
 
 public class AnimeCommand extends Command {
@@ -90,12 +88,6 @@ public class AnimeCommand extends Command {
     }
 
     private void fetchAndSendMedia(SlashCommandInteractionEvent event, String category, boolean includeVideos, int attempt) {
-        // Get Reddit Token Variables and Initialize Config
-        Dotenv config = bot.getConfig();
-        String clientID = config.get("REDDIT_CLIENT_ID");
-        String secretID = config.get("REDDIT_SECRET_ID");
-        String username = config.get("REDDIT_USERNAME");
-        String password = config.get("REDDIT_PASSWORD");
 
         // Check to make sure Reddit Token isn't expired before running command.
         String token = redditTokenManager.getValidToken();
@@ -129,7 +121,7 @@ public class AnimeCommand extends Command {
                 }
 
                 System.out.println("Media URL: " + mediaUrl);
-                validMedia = redditClient.isValidUrl(mediaUrl);
+                validMedia = redditClient.isValidMediaUrl(mediaUrl, includeVideos);
 
                 // Handle invalid media
                 if (!includeVideos && (mediaUrl.endsWith(".mp4") || mediaUrl.contains("v.redd.it") || mediaUrl.contains("redgifs.com") || mediaUrl.contains("youtu.be") || mediaUrl.contains("youtube"))) {
@@ -152,9 +144,6 @@ public class AnimeCommand extends Command {
             if (includeVideos) {
                 String message = String.format("**Here's a random video from r/%s:**\n%s", subreddit, mediaUrl);
                 event.getHook().sendMessage(message).queue();
-            } else {
-                System.out.println("Video found, but videos are not allowed.");
-                fetchAndSendMedia(event, category, includeVideos, attempt + 1);
             }
         } else if (mediaUrl.endsWith(".gif")) {
             EmbedBuilder embed = new EmbedBuilder()
