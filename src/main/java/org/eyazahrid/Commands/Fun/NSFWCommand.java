@@ -80,7 +80,8 @@ public class NSFWCommand extends Command {
                 .addChoice("japanese", "japanese")
                 .addChoice("asian", "asian")
                 .addChoice("black", "black")
-                .addChoice("white", "white"));
+                .addChoice("white", "white")
+                .addChoice("yaoi", "yaoi"));
 
         this.args.add(new OptionData(OptionType.BOOLEAN, "video", "Whether to include videos in the results").setRequired(false));
     }
