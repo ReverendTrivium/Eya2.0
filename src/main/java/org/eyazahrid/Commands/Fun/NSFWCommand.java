@@ -55,6 +55,7 @@ public class NSFWCommand extends Command {
         categoryToSubreddits.put("asian", List.of("AsiansGoneWild", "AsianPorn", "AsianCumsluts", "AsianBlowjobs", "AsianHotties", "SmallAsian", "SubmissiveAsianSluts", "Sexy_Asians"));
         categoryToSubreddits.put("black", List.of("BlackGirlsCentral", "UofBlack", "BlackPornMatters", "BlackHentai", "BlackTitties"));
         categoryToSubreddits.put("white", List.of("WhiteGirls", "thickwhitegirls", "CurvyWhiteGirls", "PhatAssWhiteGirl"));
+        categoryToSubreddits.put("yaoi", List.of("yaoi", "rule34gay", "yaoigif", "hardcoreyaoi", "YaoiSpot", "YaoiArt", "yaoismut_", "yaoiwatersports", "traphentai", "FemboyHentai"));
 
         // Get Reddit API Token
         RedditOAuth redditOAuth = new RedditOAuth(bot.httpClient, bot.gson);

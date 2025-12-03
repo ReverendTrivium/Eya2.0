@@ -39,6 +39,7 @@ public class LoopNSFWCommand extends Command {
                 .addChoice("asian", "asian")
                 .addChoice("black", "black")
                 .addChoice("white", "white")
+                .addChoice("yaoi", "yaoi")
                 .setRequired(true));
         this.permission = Permission.MANAGE_SERVER;
         this.category = Category.FUN;
